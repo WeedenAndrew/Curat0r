@@ -1,0 +1,28 @@
+[project]
+name = "curat0r"
+version = "0.0.1"
+description = "Curate a resume from the work you have actually done."
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.11"]
+web = ["fastapi>=0.115", "uvicorn[standard]>=0.30"]
+# Selection lives in auto_interner.corpus. Curat0r does not vendor a copy;
+# install it alongside:  pip install -e ../auto_Interner
+engine = []
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+# EXE002 fires on every file because the working tree lives on a mount that
+# marks everything executable. That is a property of the filesystem, not of the
+# code, and chmod does not survive there -- so it would be noise on every run.
+ignore = ["EXE002"]

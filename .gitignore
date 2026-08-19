@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.venv/
+.env
+.env.*
+!.env.example
+
+# Claude Code local state (worktrees can contain full repo copies + .env)
+.claude/
+
+# User data. A corpus is someone's employment history — never commit one.
+corpora/
+uploads/
+runtime/
+*.docx
+*.pdf
+!tests/fixtures/**
+
+# Scratch files from the 2026-08-19 session. Left on disk because the working
+# tree is on a mount that blocks unlink; ignored so they stay out of history.
+pyproject_ruff_patch.py
+docs-two-postings.png

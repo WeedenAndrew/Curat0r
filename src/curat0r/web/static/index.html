@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Curat0r</title>
+<style>
+  :root{--bg:#12131a;--panel:#1b1d27;--line:#2c2f3d;--ink:#e6e8ef;--dim:#9aa0b4;
+        --ok:#5ec27e;--warn:#e0a955;--bad:#e06c75;--acc:#7aa2f7}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+  header{padding:28px 24px 18px;border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:26px;letter-spacing:-.02em}
+  h1 span{color:var(--acc)}
+  .tag{color:var(--dim);margin-top:6px;font-size:14px}
+  main{max-width:1180px;margin:0 auto;padding:24px;display:grid;
+       grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){main{grid-template-columns:1fr}}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+  section.full{grid-column:1/-1}
+  h2{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim)}
+  textarea{width:100%;background:#0e0f16;color:var(--ink);border:1px solid var(--line);
+           border-radius:7px;padding:11px;font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;
+           resize:vertical}
+  button{background:var(--acc);color:#0e0f16;border:0;border-radius:7px;padding:10px 18px;
+         font-weight:640;cursor:pointer;font-size:14px}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.ghost{background:transparent;color:var(--acc);border:1px solid var(--line)}
+  pre{background:#0e0f16;border:1px solid var(--line);border-radius:7px;padding:14px;
+      overflow:auto;font:13px/1.6 ui-monospace,Consolas,monospace;white-space:pre-wrap;margin:0}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .src{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .src:last-child{border-bottom:0}
+  .pill{font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap;align-self:flex-start;margin-top:2px}
+  .auto{background:rgba(94,194,126,.16);color:var(--ok)}
+  .manual{background:rgba(224,169,85,.16);color:var(--warn)}
+  .bar{height:7px;background:#0e0f16;border-radius:99px;overflow:hidden;margin:8px 0 4px}
+  .bar>i{display:block;height:100%;background:var(--ok)}
+  .chip{display:inline-block;font-size:12px;padding:3px 9px;border-radius:99px;margin:3px 4px 0 0}
+  .chip.g{background:rgba(224,108,117,.15);color:var(--bad)}
+  .chip.s{background:rgba(94,194,126,.15);color:var(--ok)}
+  .gap{border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px;background:#0e0f16}
+  .gap p{margin:0 0 9px;font-size:14px;color:var(--dim)}
+  .gap b{color:var(--ink)}
+  .err{color:var(--bad);font-size:13px;margin-top:8px;white-space:pre-wrap}
+  .note{color:var(--dim);font-size:13px;margin-top:10px;font-style:italic}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:900px){.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Curat<span>0</span>r</h1>
+  <div class="tag">Curate a resume from work you have actually done. It never writes a claim about you.</div>
+</header>
+
+<main>
+  <section>
+    <h2>Sources</h2>
+    <div id="sources"></div>
+  </section>
+
+  <section>
+    <h2>Job posting</h2>
+    <textarea id="posting" rows="9" placeholder="Paste the job description here."></textarea>
+    <div class="row" style="margin-top:10px">
+      <button id="go">Curate</button>
+      <button class="ghost" id="demo">Load demo</button>
+    </div>
+    <div class="err" id="err"></div>
+  </section>
+
+  <section class="full">
+    <h2>Corpus &mdash; verified blocks only</h2>
+    <textarea id="corpus" rows="8" placeholder='{"blocks":[...]}'></textarea>
+  </section>
+
+  <section class="full" id="out" style="display:none">
+    <h2>Result</h2>
+    <div class="bar"><i id="bar" style="width:0%"></i></div>
+    <div class="row" style="justify-content:space-between">
+      <small style="color:var(--dim)"><b id="score">0%</b> of requirement weight surfaced</small>
+      <small style="color:var(--dim)" id="lines"></small>
+    </div>
+    <div id="chips" style="margin:10px 0"></div>
+    <pre id="resume"></pre>
+  </section>
+
+  <section class="full" id="gapbox" style="display:none">
+    <h2>Gaps &mdash; answer in your own words, or skip</h2>
+    <div id="gaps"></div>
+    <button id="close">Build both resumes</button>
+  </section>
+
+  <section class="full" id="both" style="display:none">
+    <h2>Both documents</h2>
+    <div class="two">
+      <div><h2>Supported now</h2><pre id="before"></pre></div>
+      <div><h2>After your answers</h2><pre id="after"></pre></div>
+    </div>
+    <div class="note" id="note"></div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let lastPrompts = [];
+
+async function api(path, body) {
+  const r = await fetch(path, body ? {
+    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)
+  } : {});
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.detail || data.error || `HTTP ${r.status}`);
+  return data;
+}
+
+api('/api/sources').then(list => {
+  $('sources').innerHTML = list.map(s => `
+    <div class="src">
+      <span class="pill ${s.auto_fetchable ? 'auto' : 'manual'}">
+        ${s.auto_fetchable ? 'API' : 'you provide'}
+      </span>
+      <div><b>${s.label}</b><br><small style="color:var(--dim)">${s.guidance}</small></div>
+    </div>`).join('');
+});
+
+$('demo').onclick = () => {
+  $('corpus').value = JSON.stringify({blocks: [
+    {id:"gh-pipeline", kind:"experience", title:"Backend / Integrations Engineer",
+     org:"Insurance Agency", dates:"2026", recency:10, _verified:true,
+     tags:["python","docker","etl","rest","linux","rabbitmq"],
+     bullets:[
+       {text:"Built a production pipeline integrating three insurance platforms, replacing manual policy re-entry.", tags:["python","etl"]},
+       {text:"Designed an append-only event log so every webhook payload is replayable after a crash.", tags:["etl"]},
+       {text:"Deployed three Docker containers with restart policies on an ARM single-board server.", tags:["docker","linux"]}]},
+    {id:"gh-interner", kind:"project", title:"Auto Interner", dates:"2026", recency:9,
+     _verified:true, tags:["python","pytest","unit testing"],
+     bullets:[{text:"Built a 22k-line Python pipeline with 32 test modules and offline fakes at every boundary.", tags:["python","pytest"]}]}
+  ]}, null, 2);
+  $('posting').value =
+`Backend Engineer — Data Integrations
+
+Requirements:
+- Strong Python and SQL
+- Experience building ETL pipelines in production
+- Comfortable with Docker and Linux
+- You have written unit tests
+
+Nice to have:
+- Kafka or another message queue
+- Kubernetes`;
+};
+
+function show(id, r) {
+  $(id).textContent = r.resume || '(nothing selected)';
+}
+
+$('go').onclick = async () => {
+  $('err').textContent = '';
+  try {
+    const blocks = JSON.parse($('corpus').value || '{"blocks":[]}').blocks;
+    const r = await api('/api/curate', {blocks, posting: $('posting').value, budget: 30});
+
+    $('out').style.display = 'block';
+    $('bar').style.width = Math.round(r.score * 100) + '%';
+    $('score').textContent = Math.round(r.score * 100) + '%';
+    $('lines').textContent = `${r.lines_used}/${r.budget} lines`;
+    $('chips').innerHTML =
+      r.shown.map(t => `<span class="chip s">${t}</span>`).join('') +
+      r.gaps.map(t => `<span class="chip g">${t}</span>`).join('');
+    show('resume', r);
+
+    lastPrompts = r.prompts;
+    $('gapbox').style.display = r.prompts.length ? 'block' : 'none';
+    $('gaps').innerHTML = r.prompts.map((p, i) => `
+      <div class="gap">
+        <p><b>${p.requirement}</b>${p.near ? ` &mdash; adjacent: ${p.near}` : ''}
+           ${p.recoverable ? '' : ' &middot; nothing similar in your corpus'}</p>
+        <p>${p.question}</p>
+        <textarea rows="2" id="a${i}" placeholder="Your own words, or leave blank to skip."></textarea>
+      </div>`).join('');
+  } catch (e) { $('err').textContent = e.message; }
+};
+
+$('close').onclick = async () => {
+  $('err').textContent = '';
+  try {
+    const answers = lastPrompts.map((p, i) => ({
+      requirement: p.requirement, text: ($('a' + i).value || '').trim(), tags: [p.requirement]
+    })).filter(a => a.text.length >= 10);
+
+    const blocks = JSON.parse($('corpus').value).blocks;
+    const r = await api('/api/gaps/close', {blocks, posting: $('posting').value, answers, budget: 30});
+
+    $('both').style.display = 'block';
+    show('before', r.supported_now);
+    show('after', r.after_answers);
+    $('note').textContent = r.note +
+      ` ${r.closed} closed, ${r.still_open.length} still open.`;
+  } catch (e) { $('err').textContent = e.message; }
+};
+</script>
+</body>
+</html>
