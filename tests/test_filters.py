@@ -13,13 +13,20 @@ from curat0r.filters import Reason, report, screen
 
 
 def repo(name, **kw):
-    base = {"name": name, "description": "does a thing", "language": "Python",
-            "size": 500, "fork": False, "archived": False}
+    base = {
+        "name": name,
+        "description": "does a thing",
+        "language": "Python",
+        "size": 500,
+        "fork": False,
+        "archived": False,
+    }
     base.update(kw)
     return base
 
 
 # ── the invariant: nothing vanishes ──────────────────────────────────────────
+
 
 def test_every_repo_gets_a_verdict():
     repos = [repo("a"), repo("leetcode-solutions"), repo("b", fork=True)]
@@ -38,14 +45,18 @@ def test_every_drop_explains_itself():
 
 # ── what gets dropped ────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("name,reason", [
-    ("neetcode-submissions", Reason.PRACTICE),
-    ("leetcode", Reason.PRACTICE),
-    ("advent-of-code-2024", Reason.PRACTICE),
-    ("react-tutorial", Reason.COURSE),
-    ("bbit-learning-labs", Reason.COURSE),
-    ("dotfiles", Reason.CONFIG),
-])
+
+@pytest.mark.parametrize(
+    "name,reason",
+    [
+        ("neetcode-submissions", Reason.PRACTICE),
+        ("leetcode", Reason.PRACTICE),
+        ("advent-of-code-2024", Reason.PRACTICE),
+        ("react-tutorial", Reason.COURSE),
+        ("bbit-learning-labs", Reason.COURSE),
+        ("dotfiles", Reason.CONFIG),
+    ],
+)
 def test_noise_is_dropped_with_the_right_reason(name, reason):
     _, verdicts = screen([repo(name)], owner="me")
     assert verdicts[0].reason is reason
@@ -83,6 +94,7 @@ def test_tiny_repo_dropped():
 
 # ── what survives ────────────────────────────────────────────────────────────
 
+
 def test_real_project_kept():
     kept, _ = screen([repo("auto_Interner")], owner="WeedenAndrew")
     assert len(kept) == 1
@@ -95,15 +107,15 @@ def test_patterns_do_not_match_substrings_of_real_names():
     keep_anyway is the remedy.
     """
     _, v = screen([repo("my-first-class-scheduler")], owner="me")
-    assert v[0].reason is Reason.COURSE   # over-matches, by design, overridable
+    assert v[0].reason is Reason.COURSE  # over-matches, by design, overridable
 
 
 # ── the override always wins ─────────────────────────────────────────────────
 
+
 def test_keep_anyway_beats_every_rule():
     repos = [repo("neetcode-submissions"), repo("x", fork=True), repo("y", size=1)]
-    kept, _ = screen(repos, owner="me",
-                     keep_anyway=frozenset({"neetcode-submissions", "x", "y"}))
+    kept, _ = screen(repos, owner="me", keep_anyway=frozenset({"neetcode-submissions", "x", "y"}))
     assert len(kept) == 3
 
 
@@ -114,9 +126,9 @@ def test_include_forks_flag():
 
 # ── the report names what it dropped ─────────────────────────────────────────
 
+
 def test_report_lists_dropped_repos_and_the_override():
-    _, verdicts = screen([repo("auto_Interner"), repo("neetcode-submissions")],
-                         owner="me")
+    _, verdicts = screen([repo("auto_Interner"), repo("neetcode-submissions")], owner="me")
     text = report(verdicts)
     assert "neetcode-submissions" in text
     assert "keep_anyway" in text

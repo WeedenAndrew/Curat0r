@@ -27,24 +27,68 @@ from typing import Any, Protocol
 # the signal, and the half the user chose deliberately.
 _TAG_ALIASES = {
     # languages (from repo.language)
-    "c#": "c#", "c++": "c++", "css": "css", "dart": "dart", "dockerfile": "docker",
-    "go": "go", "hcl": "terraform", "html": "html", "java": "java",
-    "javascript": "javascript", "jupyter notebook": "python", "kotlin": "kotlin",
-    "lua": "lua", "luau": "lua", "php": "php", "python": "python", "ruby": "ruby",
-    "rust": "rust", "shell": "bash", "sql": "sql", "swift": "swift",
-    "typescript": "typescript", "vue": "vue",
+    "c#": "c#",
+    "c++": "c++",
+    "css": "css",
+    "dart": "dart",
+    "dockerfile": "docker",
+    "go": "go",
+    "hcl": "terraform",
+    "html": "html",
+    "java": "java",
+    "javascript": "javascript",
+    "jupyter notebook": "python",
+    "kotlin": "kotlin",
+    "lua": "lua",
+    "luau": "lua",
+    "php": "php",
+    "python": "python",
+    "ruby": "ruby",
+    "rust": "rust",
+    "shell": "bash",
+    "sql": "sql",
+    "swift": "swift",
+    "typescript": "typescript",
+    "vue": "vue",
     # topics (from repo.topics)
-    "airflow": "airflow", "ansible": "ansible", "api": "api design",
-    "aws": "aws", "azure": "azure", "bash": "bash", "ci-cd": "ci/cd",
-    "django": "django", "docker": "docker", "elasticsearch": "elasticsearch",
-    "etl": "etl", "fastapi": "fastapi", "flask": "flask", "flutter": "flutter",
-    "gcp": "gcp", "graphql": "graphql", "grpc": "grpc", "kafka": "kafka",
-    "kubernetes": "kubernetes", "linux": "linux", "microservices": "microservices",
-    "mongodb": "mongodb", "mysql": "mysql", "nodejs": "node.js", "node-js": "node.js",
-    "pandas": "pandas", "postgres": "postgresql", "postgresql": "postgresql",
-    "pytest": "pytest", "pytorch": "pytorch", "react": "react", "redis": "redis",
-    "rest-api": "rest", "spark": "spark", "sqlalchemy": "sqlalchemy",
-    "tensorflow": "tensorflow", "terraform": "terraform", "testing": "unit testing",
+    "airflow": "airflow",
+    "ansible": "ansible",
+    "api": "api design",
+    "aws": "aws",
+    "azure": "azure",
+    "bash": "bash",
+    "ci-cd": "ci/cd",
+    "django": "django",
+    "docker": "docker",
+    "elasticsearch": "elasticsearch",
+    "etl": "etl",
+    "fastapi": "fastapi",
+    "flask": "flask",
+    "flutter": "flutter",
+    "gcp": "gcp",
+    "graphql": "graphql",
+    "grpc": "grpc",
+    "kafka": "kafka",
+    "kubernetes": "kubernetes",
+    "linux": "linux",
+    "microservices": "microservices",
+    "mongodb": "mongodb",
+    "mysql": "mysql",
+    "nodejs": "node.js",
+    "node-js": "node.js",
+    "pandas": "pandas",
+    "postgres": "postgresql",
+    "postgresql": "postgresql",
+    "pytest": "pytest",
+    "pytorch": "pytorch",
+    "react": "react",
+    "redis": "redis",
+    "rest-api": "rest",
+    "spark": "spark",
+    "sqlalchemy": "sqlalchemy",
+    "tensorflow": "tensorflow",
+    "terraform": "terraform",
+    "testing": "unit testing",
     "websocket": "webhooks",
 }
 
@@ -92,9 +136,7 @@ def _tags_for(repo: dict[str, Any]) -> frozenset[str]:
         raw.append(str(language))
     raw.extend(str(t) for t in repo.get("topics", []) or [])
     return frozenset(
-        _TAG_ALIASES[key]
-        for key in (r.strip().casefold() for r in raw)
-        if key in _TAG_ALIASES
+        _TAG_ALIASES[key] for key in (r.strip().casefold() for r in raw) if key in _TAG_ALIASES
     )
 
 
@@ -136,8 +178,14 @@ def drafts_from_repos(
     """
     if screened:
         from curat0r.filters import screen
-        repos, _ = screen(repos, owner, keep_anyway=keep_anyway,
-                          include_forks=include_forks, min_size_kb=min_size_kb)
+
+        repos, _ = screen(
+            repos,
+            owner,
+            keep_anyway=keep_anyway,
+            include_forks=include_forks,
+            min_size_kb=min_size_kb,
+        )
 
     drafts: list[DraftBlock] = []
     for repo in repos:

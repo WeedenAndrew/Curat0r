@@ -32,10 +32,10 @@ from curat0r.errors import IngestNotPermitted, UnknownSource
 class IngestMethod(StrEnum):
     """How data from a source may legitimately be obtained."""
 
-    API = "api"                  # sanctioned public API — safe to fetch
+    API = "api"  # sanctioned public API — safe to fetch
     USER_EXPORT = "user_export"  # user downloads their own archive and uploads it
     USER_PASTED = "user_pasted"  # user pastes the content
-    LOCAL_FILE = "local_file"    # user hands us a file off their own disk
+    LOCAL_FILE = "local_file"  # user hands us a file off their own disk
 
     @property
     def may_auto_fetch(self) -> bool:
@@ -212,9 +212,7 @@ def parse_github(url: str) -> GitHubTarget:
         return GitHubTarget(match.group(1), match.group(2).removesuffix(".git"))
     if match := _GITHUB_USER.match(path):
         return GitHubTarget(match.group(1))
-    raise UnknownSource(
-        f"expected a GitHub profile or repository URL, got path {path!r}"
-    )
+    raise UnknownSource(f"expected a GitHub profile or repository URL, got path {path!r}")
 
 
 def sources_for(kind: Contributes) -> tuple[Source, ...]:
@@ -228,10 +226,7 @@ def coverage_gaps() -> dict[str, tuple[str, ...]]:
     A resume missing work history is a different problem from one missing
     projects, and the fix is a different source each time.
     """
-    return {
-        kind.value: tuple(s.label for s in sources_for(kind))
-        for kind in Contributes
-    }
+    return {kind.value: tuple(s.label for s in sources_for(kind)) for kind in Contributes}
 
 
 def describe_all() -> list[dict[str, str]]:

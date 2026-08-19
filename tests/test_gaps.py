@@ -23,12 +23,18 @@ VERIFIED = [{"id": "gh-pipeline", "_verified": True}]
 
 # ── Prompts ask; they never assert ───────────────────────────────────────────
 
+
 def test_prompt_never_contains_a_claim_about_the_user():
     for prompt in prompts_for_gaps(["kafka", "cobol"], CORPUS_TAGS):
         lowered = prompt.question.casefold()
         assert "?" in prompt.question
-        for phrase in ("you have experience", "you are proficient", "you built",
-                       "you architected", "your experience with"):
+        for phrase in (
+            "you have experience",
+            "you are proficient",
+            "you built",
+            "you architected",
+            "your experience with",
+        ):
             assert phrase not in lowered
 
 
@@ -58,6 +64,7 @@ def test_every_prompt_offers_an_exit():
 
 # ── Answers become blocks the user owns ──────────────────────────────────────
 
+
 def test_answer_block_is_verified_because_the_user_typed_it():
     block = block_from_answer(Answer("kafka", "Ran a 3-broker cluster.", frozenset()), "g0")
     assert block["_verified"] is True
@@ -77,6 +84,7 @@ def test_answer_text_is_preserved_verbatim():
 
 
 # ── Both documents are fully supported ───────────────────────────────────────
+
 
 def test_second_document_contains_only_answered_gaps():
     docs = build_two_documents(

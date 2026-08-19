@@ -22,6 +22,7 @@ CORPUS_TAGS = {
 
 # ── THE invariant ────────────────────────────────────────────────────────────
 
+
 def test_adjacency_never_reports_an_exact_match_as_near():
     """A near match for something you actually have would imply it's a gap."""
     assert nearest("postgresql", CORPUS_TAGS) is None
@@ -31,9 +32,9 @@ def test_adjacency_never_reports_an_exact_match_as_near():
 def test_near_match_names_the_requirement_as_still_unmet():
     match = nearest("kafka", CORPUS_TAGS)
     assert match is not None
-    assert match.requirement == "kafka"     # still the thing you lack
+    assert match.requirement == "kafka"  # still the thing you lack
     assert match.have == "rabbitmq"
-    assert "no kafka" in match.describe()   # phrased as a gap, not a match
+    assert "no kafka" in match.describe()  # phrased as a gap, not a match
 
 
 def test_at_most_one_near_match_is_returned():
@@ -44,10 +45,17 @@ def test_at_most_one_near_match_is_returned():
 
 # ── Curated families ─────────────────────────────────────────────────────────
 
+
 @pytest.mark.parametrize(
     "have,want",
-    [("kafka", "rabbitmq"), ("postgresql", "mysql"), ("react", "vue"),
-     ("docker", "podman"), ("airflow", "dagster"), ("pytorch", "tensorflow")],
+    [
+        ("kafka", "rabbitmq"),
+        ("postgresql", "mysql"),
+        ("react", "vue"),
+        ("docker", "podman"),
+        ("airflow", "dagster"),
+        ("pytorch", "tensorflow"),
+    ],
 )
 def test_family_members_are_adjacent(have, want):
     assert 0.4 < DEFAULT.score(have, want) < 1.0
@@ -67,6 +75,7 @@ def test_normalization_handles_separators_and_case():
 
 
 # ── Lexical fallback, and its false friends ──────────────────────────────────
+
 
 def test_morphological_variant_matches():
     """The 'unit tests' vs 'unit testing' miss that exact matching had."""
@@ -88,6 +97,7 @@ def test_merely_similar_words_do_not_match():
 
 # ── Affinity is for ordering only ────────────────────────────────────────────
 
+
 def test_adjacent_block_outranks_unrelated_block():
     """A message-queue project should beat a CSS project for a Kafka role."""
     want = frozenset({"kafka"})
@@ -105,6 +115,7 @@ def test_affinity_is_zero_without_overlap():
 
 
 # ── Provider is swappable ────────────────────────────────────────────────────
+
 
 def test_custom_provider_can_replace_the_graph():
     class AlwaysClose:

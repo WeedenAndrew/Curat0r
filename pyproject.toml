@@ -26,3 +26,8 @@ line-length = 100
 # marks everything executable. That is a property of the filesystem, not of the
 # code, and chmod does not survive there -- so it would be noise on every run.
 ignore = ["EXE002"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]

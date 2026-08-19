@@ -25,3 +25,6 @@ runtime/
 # tree is on a mount that blocks unlink; ignored so they stay out of history.
 pyproject_ruff_patch.py
 docs-two-postings.png
+PUSH.cmd
+FINALISE.cmd
+CLAUDE.md

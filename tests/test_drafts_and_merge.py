@@ -11,18 +11,39 @@ from curat0r.drafts import drafts_from_repos, to_corpus
 from curat0r.merge import merge, verified_only
 
 REPOS = [
-    {"name": "auto_Interner", "description": "Internship discovery pipeline",
-     "language": "Python", "topics": ["docker"], "pushed_at": "2026-08-07T00:00:00Z",
-     "size": 900, "stargazers_count": 3, "fork": False},
-    {"name": "Goblin-Flip", "description": "A fantasy coin-flip game",
-     "language": "Dart", "topics": [], "pushed_at": "2026-08-08T00:00:00Z",
-     "size": 400, "stargazers_count": 0, "fork": False},
-    {"name": "somebody-elses", "description": "forked", "language": "Go",
-     "pushed_at": "2026-01-01T00:00:00Z", "size": 10, "fork": True},
+    {
+        "name": "auto_Interner",
+        "description": "Internship discovery pipeline",
+        "language": "Python",
+        "topics": ["docker"],
+        "pushed_at": "2026-08-07T00:00:00Z",
+        "size": 900,
+        "stargazers_count": 3,
+        "fork": False,
+    },
+    {
+        "name": "Goblin-Flip",
+        "description": "A fantasy coin-flip game",
+        "language": "Dart",
+        "topics": [],
+        "pushed_at": "2026-08-08T00:00:00Z",
+        "size": 400,
+        "stargazers_count": 0,
+        "fork": False,
+    },
+    {
+        "name": "somebody-elses",
+        "description": "forked",
+        "language": "Go",
+        "pushed_at": "2026-01-01T00:00:00Z",
+        "size": 10,
+        "fork": True,
+    },
 ]
 
 
 # ── Drafts assert only what GitHub asserts ───────────────────────────────────
+
 
 def test_forks_excluded_by_default():
     assert {d.title for d in drafts_from_repos(REPOS)} == {"auto_Interner", "Goblin-Flip"}
@@ -60,6 +81,7 @@ def test_emitted_shape_matches_the_engine_schema():
 
 
 # ── Merge protects what the user owns ────────────────────────────────────────
+
 
 def test_new_blocks_are_added():
     result = merge([], [{"id": "gh-a", "title": "A"}])
@@ -110,15 +132,26 @@ def test_engine_only_sees_verified_blocks():
 
 # ── the same project from two sources ────────────────────────────────────────
 
+
 def test_same_project_from_resume_and_github_collapses():
     """`Auto Interner` and `auto_Interner` are one project, not two."""
     from curat0r.merge import dedupe_across_sources
+
     blocks = [
-        {"id": "r1", "title": "Auto Interner",
-         "bullets": [{"text": "Built an automated internship pipeline using Git snapshots."},
-                     {"text": "Prepared a Raspberry Pi 4B deployment."}]},
-        {"id": "gh", "title": "auto_Interner", "_source": "github",
-         "bullets": [{"text": "Automatic Internship application pipeline."}]},
+        {
+            "id": "r1",
+            "title": "Auto Interner",
+            "bullets": [
+                {"text": "Built an automated internship pipeline using Git snapshots."},
+                {"text": "Prepared a Raspberry Pi 4B deployment."},
+            ],
+        },
+        {
+            "id": "gh",
+            "title": "auto_Interner",
+            "_source": "github",
+            "bullets": [{"text": "Automatic Internship application pipeline."}],
+        },
     ]
     kept, dropped = dedupe_across_sources(blocks)
     assert len(kept) == 1
@@ -128,6 +161,7 @@ def test_same_project_from_resume_and_github_collapses():
 
 def test_dedupe_keeps_genuinely_different_projects():
     from curat0r.merge import dedupe_across_sources
+
     blocks = [
         {"id": "a", "title": "Goblin Flip", "bullets": [{"text": "a game"}]},
         {"id": "b", "title": "Fantasy Blackjack", "bullets": [{"text": "another game"}]},
@@ -138,6 +172,7 @@ def test_dedupe_keeps_genuinely_different_projects():
 
 def test_dedupe_preserves_order():
     from curat0r.merge import dedupe_across_sources
+
     blocks = [{"id": str(i), "title": f"P{i}", "bullets": [{"text": "x"}]} for i in range(4)]
     kept, _ = dedupe_across_sources(blocks)
     assert [b["id"] for b in kept] == ["0", "1", "2", "3"]

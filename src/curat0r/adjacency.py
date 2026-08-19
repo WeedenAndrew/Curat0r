@@ -197,6 +197,5 @@ def affinity(
     if not block_tags or not requirements:
         return 0.0
     return sum(
-        max((provider.score(tag, want) for tag in block_tags), default=0.0)
-        for want in requirements
+        max((provider.score(tag, want) for tag in block_tags), default=0.0) for want in requirements
     )

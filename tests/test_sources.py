@@ -19,6 +19,7 @@ from curat0r.sources import (
 
 # ── Only GitHub may be fetched ───────────────────────────────────────────────
 
+
 def test_github_is_auto_fetchable():
     source = require_auto_fetchable("https://github.com/WeedenAndrew")
     assert source.key == "github"
@@ -52,6 +53,7 @@ def test_job_boards_route_to_paste():
 
 # ── Unknown hosts are refused rather than guessed at ─────────────────────────
 
+
 def test_unknown_host_is_refused():
     with pytest.raises(UnknownSource, match="not a supported source"):
         identify("https://example.com/jobs/1")
@@ -74,6 +76,7 @@ def test_subdomain_of_supported_host_matches():
 
 
 # ── GitHub URL parsing ───────────────────────────────────────────────────────
+
 
 def test_profile_url():
     target = parse_github("https://github.com/WeedenAndrew")
@@ -103,14 +106,17 @@ def test_parse_github_still_enforces_the_guard():
 
 # ── Newly registered sources ─────────────────────────────────────────────────
 
+
 def test_kaggle_is_auto_fetchable():
     """Kaggle publishes an official public API, so fetching is sanctioned."""
     from curat0r.sources import IngestMethod, require_auto_fetchable
+
     assert require_auto_fetchable("https://kaggle.com/someone").method is IngestMethod.API
 
 
 def test_base_resume_has_no_host_and_is_reached_by_key():
     from curat0r.sources import IngestMethod, by_key
+
     source = by_key("resume")
     assert source.method is IngestMethod.LOCAL_FILE
     assert source.hosts == ()
@@ -120,6 +126,7 @@ def test_base_resume_has_no_host_and_is_reached_by_key():
 def test_unknown_key_is_refused():
     from curat0r.errors import UnknownSource
     from curat0r.sources import by_key
+
     with pytest.raises(UnknownSource, match="no source registered"):
         by_key("monster")
 
@@ -127,16 +134,19 @@ def test_unknown_key_is_refused():
 def test_every_registered_source_explains_itself():
     """A refusal without guidance is a dead end for the user."""
     from curat0r.sources import REGISTRY
+
     for source in REGISTRY:
         assert len(source.guidance) > 20, source.key
 
 
 # ── what each source contributes ─────────────────────────────────────────────
 
+
 def test_work_history_and_projects_come_from_different_sources():
     """A repository is not a job. Treating one pool as both makes a corpus
     where GitHub competes with employment for the same resume slot."""
     from curat0r.sources import Contributes, sources_for
+
     projects = {s.key for s in sources_for(Contributes.PROJECTS)}
     work = {s.key for s in sources_for(Contributes.WORK_HISTORY)}
     assert "github" in projects and "kaggle" in projects
@@ -146,6 +156,7 @@ def test_work_history_and_projects_come_from_different_sources():
 
 def test_every_material_kind_has_at_least_one_source():
     from curat0r.sources import Contributes, coverage_gaps
+
     gaps = coverage_gaps()
     for kind in Contributes:
         assert gaps[kind.value], f"nothing can supply {kind.value}"
@@ -154,6 +165,7 @@ def test_every_material_kind_has_at_least_one_source():
 def test_indeed_profile_is_an_export_not_a_scrape():
     """Indeed prohibits scraping and a user's own profile is no exception."""
     from curat0r.sources import IngestMethod, by_key
+
     source = by_key("indeed-profile")
     assert source.method is IngestMethod.USER_EXPORT
     assert not source.method.may_auto_fetch
@@ -162,5 +174,6 @@ def test_indeed_profile_is_an_export_not_a_scrape():
 
 def test_only_sanctioned_apis_remain_auto_fetchable():
     from curat0r.sources import REGISTRY
+
     auto = {s.key for s in REGISTRY if s.method.may_auto_fetch}
     assert auto == {"github", "kaggle"}

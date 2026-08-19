@@ -91,13 +91,17 @@ def _curate(blocks: list[dict], posting: str, budget: int) -> CurateResponse:
 
 # ── API ──────────────────────────────────────────────────────────────────────
 
+
 @app.get("/api/sources", response_model=list[SourceOut], tags=["sources"])
 async def list_sources() -> list[SourceOut]:
     """What each source needs from the user, and which may be fetched."""
     return [
         SourceOut(
-            key=s.key, label=s.label, method=s.method.value,
-            auto_fetchable=s.method.may_auto_fetch, guidance=s.guidance,
+            key=s.key,
+            label=s.label,
+            method=s.method.value,
+            auto_fetchable=s.method.may_auto_fetch,
+            guidance=s.guidance,
         )
         for s in REGISTRY
     ]

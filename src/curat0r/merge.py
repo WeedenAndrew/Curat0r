@@ -25,7 +25,7 @@ class MergeResult:
     blocks: tuple[dict[str, Any], ...]
     added: tuple[str, ...]
     refreshed: tuple[str, ...]
-    protected: tuple[str, ...]     # user-owned; incoming change withheld
+    protected: tuple[str, ...]  # user-owned; incoming change withheld
     pending: tuple[dict[str, Any], ...]
 
     def summary(self) -> str:
@@ -112,7 +112,7 @@ def dedupe_across_sources(blocks: list[dict[str, Any]]) -> tuple[list[dict[str, 
     for block in blocks:
         key = _title_key(block)
         if not key:
-            order.append(id(block))          # keep untitled blocks as-is
+            order.append(id(block))  # keep untitled blocks as-is
             best[id(block)] = block
             continue
         if key not in best:
@@ -121,6 +121,7 @@ def dedupe_across_sources(blocks: list[dict[str, Any]]) -> tuple[list[dict[str, 
             continue
 
         incumbent = best[key]
+
         def richness(b: dict[str, Any]) -> tuple[int, int]:
             bullets = b.get("bullets") or []
             return (len(bullets), sum(len(x.get("text", "")) for x in bullets))

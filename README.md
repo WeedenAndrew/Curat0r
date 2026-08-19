@@ -4,7 +4,7 @@
 
 Point it at your GitHub, upload your LinkedIn export, paste a job posting. It
 builds a corpus of your real work, you confirm what's true, and it selects the
-right subset for each application — with an honest report of what the posting
+right subset for each application, with an honest report of what the posting
 wanted that you don't have.
 
 It never writes a claim about you. That's the whole design.
@@ -13,27 +13,35 @@ It never writes a claim about you. That's the whole design.
 
 ## Status
 
-**Phase 0 complete.** 1,425 lines, 101 tests, no runtime dependencies. The
-guarantees are built and tested; what is missing is reach — the GitHub fetcher
-behind `RepoFetcher` has no implementation, so every source runs on fixtures.
+**Phase 0 complete.** 1,426 lines, 89 test functions covering 101 cases, no
+runtime dependencies. The guarantees are built and tested. What is missing is
+reach: the GitHub fetcher behind `RepoFetcher` has no implementation, so every
+source currently runs on fixtures.
 
-Six phases planned: [ROADMAP.md](ROADMAP.md).
+Six phases planned, in [ROADMAP.md](ROADMAP.md). Phase 1.5 absorbs the selection
+engine from `auto_Interner`, where it was written and where it does not belong.
 
 ## What it produces
 
 ![Two tailored resumes from one corpus](docs/examples/two-postings.png)
 
-**Same corpus. Same person. Two different documents.**
+**Same corpus. Same person. Two different documents, each one page.**
 
-Left is a data-platform internship, right is mobile. The projects section differs
-because the postings do. Nothing was rewritten — both are the base résumé with
-different paragraphs removed.
+Two real Summer 2027 listings. Left is a backend internship, right is mobile.
+The projects section differs because the postings do. Nothing was rewritten;
+both are the master résumé with different paragraphs deleted.
 
-| | data platform | mobile |
+| | backend | mobile |
 |---|---|---|
-| kept | Auto Interner | Goblin Flip |
-| dropped | Goblin Flip | Auto Interner |
-| coverage | 88% | 100% |
+| projects kept | Auto Interner, Fantasy Blackjack | Auto Interner, Goblin Flip |
+| evidence | 15 | 9 |
+| coverage | 83% | 100% |
+| unsupported | algorithms | none |
+
+Read `evidence` rather than `coverage` when comparing two postings. Coverage's
+denominator is how many skills the posting happened to name, which is a fact
+about the writing. The mobile listing scores 100% on nine points of evidence;
+the backend listing scores 83% on fifteen.
 
 `********` marks a masked field. Asterisks rather than plausible substitutions,
 because "Insurance Services Client" reads as real content and misrepresents the
@@ -51,7 +59,7 @@ Résumé sections plus public GitHub repositories, screened and deduplicated:
 ```
 
 `Auto Interner` from the résumé and `auto_Interner` from GitHub are one project.
-Deduplication keeps the richer block — usually the résumé, because the user wrote
+Deduplication keeps the richer block, usually the résumé, because the user wrote
 it about the work rather than about the repository.
 
 ### Sources supply different things
@@ -86,13 +94,14 @@ experience.
 
 Curat0r cannot, because it does not generate. It maintains a corpus of blocks
 *you* wrote and confirmed, and tailoring **selects a subset**. The model chooses
-what to show, never what is true. Worst case is a badly chosen true statement —
-a ranking bug, not a fabricated credential you have to defend in an interview.
+what to show, never what is true. Worst case is a badly chosen true statement.
+That is a ranking bug, not a fabricated credential you have to defend in an
+interview.
 
 When a posting asks for something you don't have, it says so:
 
 ```
-GAPS — nothing in your corpus supports these:
+GAPS - nothing in your corpus supports these:
   [preferred] kafka
        posting said: "Familiarity with Kafka or another message queue"
 ```
@@ -106,12 +115,12 @@ true. Both beat an invented bullet.
 |---|---|---|
 | **GitHub** | Public REST API | Sanctioned programmatic access |
 | **Kaggle** | Official public API + your token | Sanctioned; competitions and notebooks are real project evidence |
-| **Base résumé** | You upload a `.docx` | Your own file. Fastest way to seed a corpus — the prose is already yours |
+| **Base résumé** | You upload a `.docx` | Your own file, and the fastest way to seed a corpus because the prose is already yours |
 | **LinkedIn** | You upload your own data export | Scraping is prohibited; your own archive isn't, and it's richer |
 | **Indeed / Glassdoor** | You paste the posting | Scraping is prohibited; pasting costs one keystroke |
 
 This is enforced in code, not documented as a convention. `require_auto_fetchable()`
-gates every fetch and refuses anything not sanctioned — with guidance attached,
+gates every fetch and refuses anything not sanctioned, with guidance attached,
 so a refusal tells you what to do instead of just saying no.
 
 Framed correctly it's a strength. A product built on scraping is one
@@ -124,7 +133,7 @@ until present-you agrees.
 
 So every ingested block arrives `_verified: false`, and the selection engine
 only ever sees verified blocks. Draft bullets state exactly what GitHub
-asserts — name, description, primary language — and nothing more. No
+asserts, which is name, description and primary language, and nothing more. No
 "architected a scalable system" from a repo with four commits. There is a test
 asserting the embellishment vocabulary never appears.
 
@@ -144,10 +153,19 @@ job posting ────────▶ requirements ──────▶ selec
                                              under a budget)
 ```
 
-Curat0r emits the exact corpus JSON that `auto_interner.corpus` reads. The two
-projects share a **format, not a dependency** — the same arrangement as the
-blackjack rule vectors between Fantasy_Blackjack and Goblin-Flip. Either side
-can be rewritten in another language without touching the other.
+### Where the engine lives
+
+The selection engine was built inside `auto_Interner` and sits there orphaned,
+imported by nothing on that project's live path. It is corpus-driven,
+source-agnostic and written for arbitrary users, which is this project.
+
+It moves here in Phase 1.5: `blocks`, `requirements`, `selection`, `coverage`,
+`tagging`, `assemble`, `formatting`. 1,889 lines and 75 tests, whose only
+dependency outside itself is one template reader.
+
+`auto_Interner` keeps the personal pipeline it was written to be. One user, one
+Raspberry Pi, one résumé, on a schedule. The two projects stop sharing code
+entirely once the move is done.
 
 ## Two documents, both true
 
@@ -155,14 +173,14 @@ The obvious product request is two resumes: one honest, one that "fills the
 gaps". The second is a fabricated resume, and it would delete the only thing
 this tool has that others don't.
 
-The request is still right — the premise behind it just isn't. **Most gaps are
+The request is still right. The premise behind it isn't. **Most gaps are
 corpus gaps, not experience gaps.** The posting wants Kubernetes; you deployed a
 cluster last spring and never wrote it down. So the second document is the same
 selection, run again over a corpus you just added *your own* truthful blocks to.
 
 ```
-This role asks for kafka. Your corpus has rabbitmq, which is adjacent —
-have you also worked with kafka directly? If yes, describe it in your own
+This role asks for kafka. Your corpus has rabbitmq, which is adjacent.
+Have you also worked with kafka directly? If yes, describe it in your own
 words. If no, skip it.
 ```
 
@@ -172,18 +190,20 @@ difference between them is how much you remembered, not how much was generated.
 
 Gaps with adjacent evidence are asked first, so a user who quits after three
 questions has answered the three most likely to produce a real answer. Every
-prompt offers an explicit skip — if declining is harder than confirming, the
+prompt offers an explicit skip. If declining is harder than confirming, the
 tool drifts toward flattery.
 
 ## Running the site
 
 ```bash
 pip install -e ".[web,dev]"
-pip install -e ../auto_Interner      # the selection engine
+pip install -e ../auto_Interner      # selection engine, until Phase 1.5 lands
 uvicorn curat0r.web.main:app --reload --port 8000
 ```
 
-Then <http://localhost:8000> — or `/docs` for the API.
+That second line is temporary and is the reason Phase 1.5 exists.
+
+Then <http://localhost:8000>, or `/docs` for the API.
 
 A refused source returns **451 Unavailable For Legal Reasons**, which is the
 literally correct code: the resource exists and is reachable, and we decline
@@ -196,5 +216,13 @@ because its terms say not to.
 3. Paste a job posting → tailored resume, plus the gaps
 4. Paste a *different* posting → different resume, same corpus, nothing rewritten
 
-Step 4 is the one that lands. Same verified claims, reordered and reselected —
-no regeneration, nothing invented.
+Step 4 is the one that lands. Same verified claims, reordered and reselected.
+No regeneration, nothing invented.
+
+## License
+
+[MIT](LICENSE).
+
+Deliberately more permissive than `auto_Interner`, which is noncommercial. That
+one is a personal tool published to be read. This one is meant to be used, and a
+tool nobody may build on is a tool nobody adopts.
