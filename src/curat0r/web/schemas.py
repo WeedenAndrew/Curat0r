@@ -5,6 +5,10 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+# Imported at runtime, not under TYPE_CHECKING: this module uses postponed
+# annotations, and Pydantic resolves them at model-build time.
+from curat0r.types import Block
+
 
 class SourceOut(BaseModel):
     key: str
@@ -29,7 +33,7 @@ class DraftOut(BaseModel):
 
 
 class CurateRequest(BaseModel):
-    blocks: list[dict] = Field(min_length=1)
+    blocks: list[Block] = Field(min_length=1)
     posting: str = Field(min_length=20, max_length=50_000)
     budget: int = Field(default=30, ge=8, le=80)
 
@@ -60,7 +64,7 @@ class AnswerIn(BaseModel):
 
 
 class CloseGapsRequest(BaseModel):
-    blocks: list[dict]
+    blocks: list[Block]
     posting: str
     answers: list[AnswerIn]
     budget: int = Field(default=30, ge=8, le=80)

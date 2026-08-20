@@ -19,6 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from curat0r.errors import Curat0rError, IngestNotPermitted, UnknownSource
 from curat0r.gaps import Answer, GapPrompt, prompts_for_gaps
 from curat0r.sources import REGISTRY, parse_github, require_auto_fetchable
+from curat0r.types import Block
 from curat0r.web import engine
 from curat0r.web.schemas import (
     CloseGapsRequest,
@@ -64,7 +65,7 @@ async def handle_engine_missing(_: Request, exc: engine.EngineUnavailable) -> JS
     )
 
 
-def _corpus_tags(blocks: list[dict]) -> dict[str, tuple[str, ...]]:
+def _corpus_tags(blocks: list[Block]) -> dict[str, tuple[str, ...]]:
     index: dict[str, list[str]] = {}
     for block in blocks:
         for tag in block.get("tags", []):
@@ -82,7 +83,7 @@ def _prompt_out(prompt: GapPrompt) -> GapPromptOut:
     )
 
 
-def _curate(blocks: list[dict], posting: str, budget: int) -> CurateResponse:
+def _curate(blocks: list[Block], posting: str, budget: int) -> CurateResponse:
     verified = [b for b in blocks if b.get("_verified")]
     result = engine.curate(verified, posting, budget)
     prompts = prompts_for_gaps(result["gaps"], _corpus_tags(verified))
@@ -108,7 +109,7 @@ async def list_sources() -> list[SourceOut]:
 
 
 @app.post("/api/ingest/check", tags=["sources"])
-async def check_ingest(body: IngestRequest) -> dict:
+async def check_ingest(body: IngestRequest) -> dict[str, str | bool | None]:
     """Ask whether a URL may be fetched. Refusals carry guidance, not just no."""
     source = require_auto_fetchable(body.url)
     target = parse_github(body.url) if source.key == "github" else None
@@ -157,7 +158,7 @@ async def close_gaps(body: CloseGapsRequest) -> TwoDocumentsOut:
 
 
 @app.get("/api/health", tags=["meta"])
-async def health() -> dict:
+async def health() -> dict[str, str]:
     return {"status": "ok", "engine": "available" if engine.available() else "missing"}
 
 

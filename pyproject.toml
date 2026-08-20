@@ -6,7 +6,19 @@ requires-python = ">=3.12"
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.11"]
+# Pinned exactly, and to the same versions auto_Interner uses. A floating
+# ">=" means CI resolves whatever is newest that morning, so a green run can
+# go red with no commit behind it. Both repositories should fail for the same
+# reasons on the same day.
+dev = [
+  "mypy==1.17.1",
+  "pytest==8.4.1",
+  "ruff==0.12.9",
+  # starlette.testclient refuses to import without it, so tests/test_web.py
+  # fails at collection and takes the whole run down with it. Test-only; the
+  # runtime dependency list above stays empty.
+  "httpx2==2.12.0",
+]
 web = ["fastapi>=0.115", "uvicorn[standard]>=0.30"]
 # Selection lives in auto_interner.corpus. Curat0r does not vendor a copy;
 # install it alongside:  pip install -e ../auto_Interner
@@ -31,3 +43,11 @@ ignore = ["EXE002"]
 python_version = "3.12"
 strict = true
 files = ["src"]
+
+# The selection engine lives in the other repository and CI installs only
+# .[web,dev], so these imports are unresolvable here by design rather than by
+# accident. Phase 1.5 moves auto_interner.corpus into this package; when it
+# lands, the dependency goes and this override goes with it.
+[[tool.mypy.overrides]]
+module = ["auto_interner.*"]
+ignore_missing_imports = true

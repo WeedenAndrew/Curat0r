@@ -112,8 +112,12 @@ def dedupe_across_sources(blocks: list[dict[str, Any]]) -> tuple[list[dict[str, 
     for block in blocks:
         key = _title_key(block)
         if not key:
-            order.append(id(block))  # keep untitled blocks as-is
-            best[id(block)] = block
+            # Keep untitled blocks as-is. The prefix keeps identity keys out of
+            # the title namespace: _title_key strips everything but [a-z0-9], so
+            # no real title can ever produce a key containing a colon.
+            untitled_key = f"id:{id(block)}"
+            order.append(untitled_key)
+            best[untitled_key] = block
             continue
         if key not in best:
             best[key] = block

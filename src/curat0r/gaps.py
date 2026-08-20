@@ -25,6 +25,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from curat0r.adjacency import DEFAULT, AdjacencyProvider, NearMatch, nearest
+from curat0r.types import Block
 
 
 class GapKind(StrEnum):
@@ -103,7 +104,7 @@ class Answer:
             raise ValueError("an empty answer does not close a gap")
 
 
-def block_from_answer(answer: Answer, block_id: str) -> dict:
+def block_from_answer(answer: Answer, block_id: str) -> Block:
     """Turn a user's answer into a corpus block.
 
     `_verified: true` — unlike ingested drafts, this text was typed by the user
@@ -126,8 +127,8 @@ def block_from_answer(answer: Answer, block_id: str) -> dict:
 class TwoDocuments:
     """What the UI offers: today's resume, and the one after you answer."""
 
-    supported_now: list[dict]
-    after_answers: list[dict]
+    supported_now: list[Block]
+    after_answers: list[Block]
     unanswered: tuple[str, ...]
 
     @property
@@ -144,7 +145,7 @@ class TwoDocuments:
 
 
 def build_two_documents(
-    verified_blocks: list[dict],
+    verified_blocks: list[Block],
     answers: list[Answer],
     all_gap_terms: list[str],
 ) -> TwoDocuments:

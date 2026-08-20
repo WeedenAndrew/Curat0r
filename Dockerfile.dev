@@ -1,0 +1,46 @@
+# The quality gate, frozen.
+#
+# Exact pins in pyproject.toml stop the *direct* tools drifting. They do not
+# stop the interpreter drifting, and they do nothing about transitive
+# dependencies. On 2026-08-19 the sandbox that wrote this had Python 3.10 while
+# the project targets 3.12, so `mypy` could not parse the source at all and the
+# gate was reported as "never executed" rather than passing or failing.
+#
+# This image removes that. `docker compose run --rm gate` produces the same four
+# results on any machine, and the same results CI produces.
+
+ARG PYTHON_IMAGE=python:3.12.13-slim-bookworm
+FROM ${PYTHON_IMAGE}
+
+# Pinned to the same patch release the runtime image of auto_Interner uses, so
+# both repositories fail for the same reasons on the same day.
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /work
+
+# Dependencies first so a source edit does not invalidate the install layer.
+COPY pyproject.toml README.md LICENSE ./
+COPY requirements-dev.lock ./
+# The committed lock is a 3.10 bootstrap and is expected to be wrong until it is
+# regenerated from inside this image. Fall back to resolving from pyproject so a
+# clean clone still builds; the lock takes over once it is real.
+RUN python -m pip install -r requirements-dev.lock \
+ || python -m pip install ".[web,dev]"
+
+COPY src ./src
+COPY tests ./tests
+RUN python -m pip install -e ".[web,dev]" --no-deps
+
+# Non-root, matching the convention in the other repository.
+RUN useradd --uid 10001 --create-home gate && chown -R gate:gate /work
+USER gate
+
+# Runs all four gates and stops at the first failure, which is what CI does.
+CMD ["sh", "-c", "python -m ruff format --check . \
+ && python -m ruff check . \
+ && python -m mypy src \
+ && python -m pytest -q"]

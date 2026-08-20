@@ -1,0 +1,65 @@
+# Dependency lock for the quality gate. Python 3.12, resolved 2026-08-19.
+#
+# Why the file exists: exact pins in pyproject.toml freeze the direct tools
+# only. Without a lock the transitive set resolves fresh on every install, and
+# coverage, pluggy, starlette or pathspec moving is enough to change what a
+# linter or type checker reports on unchanged code.
+#
+# How this one was produced, and a trap to avoid. The obvious command
+#
+#     docker compose run --rm --entrypoint pip gate freeze | sort
+#
+# does NOT regenerate anything. Dockerfile.dev installs this lock first, so
+# freezing inside the image returns the same file it was built from. Run
+# verbatim against the 3.10 bootstrap it produced a byte-identical body,
+# backports included. Resolve from pyproject.toml on a clean 3.12 interpreter
+# instead:
+#
+#     docker run --rm -v "$PWD:/repo:ro" python:3.12.13-slim-bookworm sh -c \
+#       'cp -r /repo /build && cd /build && rm -f requirements-dev.lock \
+#        && pip install -q ".[web,dev]" && pip freeze' | sort
+#
+# Then drop the local editable line. Refreshing against new upstream releases
+# requires that clean resolve; the in-image freeze cannot see drift.
+#
+# What the 3.10 bootstrap had wrong, now corrected:
+#   - tomli and exceptiongroup, backports 3.12 does not need. Both gone.
+#   - websockets pinned at 16.1.1. The real 3.12 resolve is 17.0.1.
+#
+# Three failed attempts before this one, all worth recording:
+#   1. `pip freeze` in a shared environment. 167 packages including Flask,
+#      ImageIO and Babel, none of which this project uses.
+#   2. A clean virtualenv, but on 3.10. Correct package set, wrong interpreter.
+#   3. The in-image freeze above. Circular; returned the 3.10 set unchanged.
+
+PyYAML==6.0.3
+Pygments==2.21.0
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.14.2
+click==8.4.2
+fastapi==0.141.1
+h11==0.16.0
+httpcore2==2.12.0
+httptools==0.8.0
+httpx2==2.12.0
+idna==3.19
+iniconfig==2.3.0
+mypy==1.17.1
+mypy_extensions==1.1.0
+packaging==26.3
+pathspec==1.1.1
+pluggy==1.6.0
+pydantic==2.13.4
+pydantic_core==2.46.4
+pytest==8.4.1
+python-dotenv==1.2.3
+ruff==0.12.9
+starlette==1.6.0
+truststore==0.10.4
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+uvicorn==0.52.4
+uvloop==0.22.1
+watchfiles==1.2.0
+websockets==17.0.1

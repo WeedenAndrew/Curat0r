@@ -14,7 +14,7 @@ into a shared package changes this file and nothing else.
 
 from __future__ import annotations
 
-from typing import Any
+from curat0r.types import Block, CurateResult
 
 _MISSING = (
     "The selection engine is not installed. From the Curat0r repo root:\n"
@@ -36,7 +36,7 @@ def available() -> bool:
     return True
 
 
-def curate(blocks_json: list[dict[str, Any]], posting: str, budget: int = 30) -> dict:
+def curate(blocks_json: list[Block], posting: str, budget: int = 30) -> CurateResult:
     """Run selection over verified blocks and return resume + coverage."""
     try:
         from auto_interner.corpus import (
@@ -45,7 +45,7 @@ def curate(blocks_json: list[dict[str, Any]], posting: str, budget: int = 30) ->
             render_resume,
             select,
         )
-        from auto_interner.corpus.blocks import _parse_block  # type: ignore[attr-defined]
+        from auto_interner.corpus.blocks import _parse_block
     except ModuleNotFoundError as exc:
         raise EngineUnavailable(_MISSING) from exc
 

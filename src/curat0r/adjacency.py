@@ -127,7 +127,7 @@ def _lexical(have: str, want: str) -> float:
 class GraphAdjacency:
     """Curated families first, lexical similarity as the fallback."""
 
-    def __init__(self, families=_FAMILIES) -> None:
+    def __init__(self, families: tuple[tuple[frozenset[str], float], ...] = _FAMILIES) -> None:
         self._families = families
 
     def score(self, have: str, want: str) -> float:
