@@ -13,7 +13,7 @@ dependencies = []
 dev = [
   "mypy==1.17.1",
   "pytest==8.4.1",
-  "ruff==0.12.9",
+  "ruff==0.16.10",
   # starlette.testclient refuses to import without it, so tests/test_web.py
   # fails at collection and takes the whole run down with it. Test-only; the
   # runtime dependency list above stays empty.
